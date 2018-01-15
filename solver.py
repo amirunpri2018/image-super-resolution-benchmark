@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+import progressbar
 class Solver(object):
     def __init__(self, model, **kwargs):
         self.model = model
@@ -25,7 +25,7 @@ class Solver(object):
         labels = tf.placeholder(tf.float32, shape=[None, None, None, 1])
         
         self.build_network(inputs, labels)
-        
+        bar = progressbar.ProgressBar(max_value=dataset.num_batches)
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
         for epoch in range(self.num_epochs):
@@ -33,7 +33,8 @@ class Solver(object):
                 inputs_, labels_ = dataset.get_next_batch()
                 loss = sess.run(self.loss, feed_dict={inputs: inputs_, labels: labels_})
                 sess.run(self.train_step, feed_dict={inputs: inputs_, labels: labels_})
-                print(loss)
+                #print(loss)
+                bar.update(batch+1, force=True)
             
 
 
