@@ -16,4 +16,9 @@ def compute_PSNR(outputs, labels):
     psnr = tf.reduce_mean(psnr)
     return psnr
 
+def clean_and_create_dir(path):
+    if tf.gfile.Exists(path):
+        tf.gfile.DeleteRecursively(path)
+    tf.gfile.MakeDirs(path)
+
         
