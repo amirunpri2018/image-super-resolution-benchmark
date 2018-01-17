@@ -10,20 +10,18 @@ tf.app.flags.DEFINE_string('model', 'SRCNN',
                            """Model name (SRCNN, ) """)
 tf.app.flags.DEFINE_string('scale', '3x',
                             """Super resolution scale (2x, 3x, 4x)""")
-tf.app.flags.DEFINE_integer('num_epochs', 3,
+tf.app.flags.DEFINE_integer('num_epochs', 100,
                             """Number of training epochs """)
-tf.app.flags.DEFINE_integer('batch_size', 128,
+tf.app.flags.DEFINE_integer('batch_size', 64,
                             """Batch size""")
 tf.app.flags.DEFINE_float('initial_lr', 1e-4,
                           """Initial learning rate """)
-tf.app.flags.DEFINE_integer('decay_epoch', 1,
+tf.app.flags.DEFINE_integer('decay_epoch', 20,
                             """Number of epochs to decay learning rate""")
 tf.app.flags.DEFINE_float('decay_rate', 0.5,
-                          """learning rate decay factor""")
+                          """Learning rate decay factor""")
 tf.app.flags.DEFINE_bool('verbose', False,
-                         """ print training info """)
-
-
+                         """Print training info """)
 
 def main(argv=None):
     with tf.Graph().as_default():
@@ -32,7 +30,10 @@ def main(argv=None):
         model = SRCNN()
 
         with tf.device('/cpu:0'):
-            dataset = Dataset('data/preprocessed_data/train/3x/dataset.h5', FLAGS.batch_size)
+            dataset_path = os.path.join('data/preprocessed_data/train', FLAGS.scale, 'dataset.h5')
+            if not tf.gfile.Exists(dataset_path):
+                raise Exception('Cannot find %s' %dataset)
+            dataset = Trainset('data/preprocessed_data/train/3x/dataset.h5', FLAGS.batch_size)
             inputs, labels = dataset.get_next_batch()
         
         # build graph
@@ -47,10 +48,6 @@ def main(argv=None):
         log_dir = os.path.join('log', FLAGS.model, FLAGS.scale)
         clean_and_create_dir(log_dir)
         
-        # observe training progress
-        if FLAGS.verbose:
-            bar = progressbar.ProgressBar(max_value=dataset.num_batches)
-        
         # model saver
         saver = tf.train.Saver(tf.global_variables())
 
@@ -58,11 +55,12 @@ def main(argv=None):
             writer = tf.summary.FileWriter(log_dir, sess.graph)
             sess.run(tf.global_variables_initializer())
             for epoch in range(FLAGS.num_epochs):
+                # observe training progress
+                if FLAGS.verbose:
+                    bar = progressbar.ProgressBar(max_value=dataset.num_batches)
+                
                 sess.run(dataset.iterator.initializer, feed_dict={dataset.inputs_ph: dataset.inputs, 
                                                                    dataset.labels_ph: dataset.labels})
-                
-                
-                
                 running_loss = 0
                 for batch in range(dataset.num_batches):
                     loss_val, result, _ = sess.run([loss, merge, train_step])
@@ -76,7 +74,6 @@ def main(argv=None):
                 average_loss = running_loss/dataset.num_batches
                 if FLAGS.verbose:
                     print('Epoch  %5d, loss %.5f' %(epoch, average_loss))
-            
 
             # save model
             checkpoint_path = os.path.join('checkpoint', FLAGS.model, FLAGS.scale)

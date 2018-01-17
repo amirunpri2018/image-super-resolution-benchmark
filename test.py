@@ -1,3 +1,4 @@
+from __future__ import division
 import tensorflow as tf
 import scipy
 import glob
@@ -52,16 +53,20 @@ def main(argv=None):
     saver.restore(sess, check_point)
 
     for lr_path, hr_path in zip(lr_paths, hr_paths):
+        # inp and lbl is in [0: 255] range
         inp = scipy.misc.imread(lr_path)
-        lbl = scipy.misc.imread(hr_path)
+        inp = inp/255 - 0.5
         inp = inp[np.newaxis, :, :, np.newaxis]
+
+        #since = time.time()
+        out = sess.run(out_graph, feed_dict={inp_ph: inp})    
+        #print(time.time() - since)
+        
+        out = (out + 0.5)* 255
+        lbl = scipy.misc.imread(hr_path)
         lbl = lbl[np.newaxis, :, :, np.newaxis]
-        since = time.time()
-        out = sess.run(out_graph, feed_dict={inp_ph: inp, lbl_ph:lbl})    
-        print(time.time() - since)
+        print('%20s: %.3fdB' %(os.path.basename(lr_path), compute_PSNR(out, lbl)))
         scipy.misc.imsave(os.path.join(save_path, os.path.basename(lr_path)), out[0,:,:,0])
-        scipy.misc.imsave('a.bmp', out[0,:,:,0])
-        print(compute_PSNR(out, lbl))
 
 if __name__ == '__main__':
     tf.app.run()
