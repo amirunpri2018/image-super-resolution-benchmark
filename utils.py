@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-def compute_PSNR(outputs, labels):
+def compute_PSNR1(outputs, labels):
     """ compute PSNR of outpus and labels
     args: 
     - outputs: tensor of shape (N, H, W, C)

@@ -42,7 +42,7 @@ def main(argv=None):
     inp_ph = tf.placeholder(tf.float32, [1, None, None, 1])
     lbl_ph = tf.placeholder(tf.float32, [1, None, None, 1])
 
-    model = SRCNN()
+    model = get_model(FLAGS.model)
     out_graph = model.inference(inp_ph)
     
     sess = tf.Session()
@@ -58,9 +58,9 @@ def main(argv=None):
         inp = inp/255 - 0.5
         inp = inp[np.newaxis, :, :, np.newaxis]
 
-        #since = time.time()
+        since = time.time()
         out = sess.run(out_graph, feed_dict={inp_ph: inp})    
-        #print(time.time() - since)
+        print(time.time() - since)
         
         out = (out + 0.5)* 255
         lbl = scipy.misc.imread(hr_path)

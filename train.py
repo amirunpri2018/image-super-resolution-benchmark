@@ -14,7 +14,7 @@ tf.app.flags.DEFINE_integer('num_epochs', 100,
                             """Number of training epochs """)
 tf.app.flags.DEFINE_integer('batch_size', 64,
                             """Batch size""")
-tf.app.flags.DEFINE_float('initial_lr', 1e-4,
+tf.app.flags.DEFINE_float('initial_lr', 1e-3,
                           """Initial learning rate """)
 tf.app.flags.DEFINE_integer('decay_epoch', 20,
                             """Number of epochs to decay learning rate""")
@@ -27,7 +27,7 @@ def main(argv=None):
     with tf.Graph().as_default():
         global_step = tf.train.get_or_create_global_step()
 
-        model = SRCNN()
+        model = get_model(FLAGS.model)
 
         with tf.device('/cpu:0'):
             dataset_path = os.path.join('data/preprocessed_data/train', FLAGS.scale, 'dataset.h5')
